@@ -88,6 +88,9 @@ class SimpleModel(tf.keras.Model):
 
 # latest = './miniImageNetModel/model.ckpt-60000'
 latest = './omniglotModel/model.ckpt-2000'
+from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
+
+print_tensors_in_checkpoint_file(latest, all_tensors=True, tensor_name='')
 
 # model = MiniImagenetModel(num_classes=5)
 
@@ -95,7 +98,7 @@ model = SimpleModel(num_classes=5)
 
 
 model.load_weights(latest)
-model.compile()
+model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy())
 
 numPics = 0
 
@@ -118,11 +121,12 @@ k=1
 labels = np.repeat(np.arange(n),k) # n=5, k=1
 labels = np.float32(labels)
 imageInput = np.float32(imageInput)
-model.fit(imageInput, labels, epochs=10)
+model.fit(imageInput, labels, epochs=10, batch_size=5)
 
 # Make Predictions
 testImageSource = Image.open('./imageTest.png').convert('L')
 testImage = np.array(testImageSource.getdata()).reshape(testImageSource.size[1], testImageSource.size[1], 1)
 testImage = np.float32(testImage)
-prediction = model.predict([testImage])
+testImage = np.expand_dims(testImage, axis=0)
+prediction = model.predict(testImage)
 print(prediction)
