@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, Flatten, Dense, Input, BatchNormalization
 import numpy as np
 from PIL import Image, ImageFilter
+from picamera import PiCamera 
 
 #Load in Models
 class MiniImagenetModel(tf.keras.Model):
@@ -100,6 +101,12 @@ model = SimpleModel(num_classes=5)
 model.load_weights(latest)
 model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy())
 
+cam = PiCamera()
+cam.preview_fullscreen=False
+cam.preview_window=(740, 400, 450, 500)
+cam.resolution=(1080,720)
+cam.color_effects = (128,128)
+
 numPics = 0
 
 #Modify images for model input (For Omniglot)
@@ -123,10 +130,16 @@ labels = np.float32(labels)
 imageInput = np.float32(imageInput)
 model.fit(imageInput, labels, epochs=10, batch_size=5)
 
-# Make Predictions
-testImageSource = Image.open('./imageTest.png').convert('L')
-testImage = np.array(testImageSource.getdata()).reshape(testImageSource.size[1], testImageSource.size[1], 1)
-testImage = np.float32(testImage)
-testImage = np.expand_dims(testImage, axis=0)
-prediction = model.predict(testImage)
-print(prediction)
+cam.start_preview()
+while True:
+    pause = input("Enter input to take pic")
+    cam.capture('./imageTest.png', resize=(28,28))
+    # Make Predictions
+    testImageSource = Image.open('./imageTest.png').convert('L')
+    testImage = np.array(testImageSource.getdata()).reshape(testImageSource.size[1], testImageSource.size[1], 1)
+    testImage = np.float32(testImage)
+    testImage = np.expand_dims(testImage, axis=0)
+    prediction = model.predict(testImage)
+    print(prediction)
+
+cam.stop_preview()
